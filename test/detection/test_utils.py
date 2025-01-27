@@ -14,7 +14,9 @@ from supervision.detection.utils import (
     filter_polygons_by_area,
     get_data_item,
     merge_data,
+    merge_metadata,
     move_boxes,
+    move_masks,
     process_roboflow_result,
     scale_boxes,
     xcycwh_to_xyxy,
@@ -439,6 +441,268 @@ def test_move_boxes(
     with exception:
         result = move_boxes(xyxy=xyxy, offset=offset)
         assert np.array_equal(result, expected_result)
+
+
+@pytest.mark.parametrize(
+    "masks, offset, resolution_wh, expected_result, exception",
+    [
+        (
+            np.array(
+                [
+                    [
+                        [False, False, False, False],
+                        [False, True, True, False],
+                        [False, True, True, False],
+                        [False, False, False, False],
+                    ]
+                ],
+                dtype=bool,
+            ),
+            np.array([0, 0]),
+            (4, 4),
+            np.array(
+                [
+                    [
+                        [False, False, False, False],
+                        [False, True, True, False],
+                        [False, True, True, False],
+                        [False, False, False, False],
+                    ]
+                ],
+                dtype=bool,
+            ),
+            DoesNotRaise(),
+        ),
+        (
+            np.array(
+                [
+                    [
+                        [False, False, False, False],
+                        [False, True, True, False],
+                        [False, True, True, False],
+                        [False, False, False, False],
+                    ]
+                ],
+                dtype=bool,
+            ),
+            np.array([-1, -1]),
+            (4, 4),
+            np.array(
+                [
+                    [
+                        [True, True, False, False],
+                        [True, True, False, False],
+                        [False, False, False, False],
+                        [False, False, False, False],
+                    ]
+                ],
+                dtype=bool,
+            ),
+            DoesNotRaise(),
+        ),
+        (
+            np.array(
+                [
+                    [
+                        [False, False, False, False],
+                        [False, True, True, False],
+                        [False, True, True, False],
+                        [False, False, False, False],
+                    ]
+                ],
+                dtype=bool,
+            ),
+            np.array([-2, -2]),
+            (4, 4),
+            np.array(
+                [
+                    [
+                        [True, False, False, False],
+                        [False, False, False, False],
+                        [False, False, False, False],
+                        [False, False, False, False],
+                    ]
+                ],
+                dtype=bool,
+            ),
+            DoesNotRaise(),
+        ),
+        (
+            np.array(
+                [
+                    [
+                        [False, False, False, False],
+                        [False, True, True, False],
+                        [False, True, True, False],
+                        [False, False, False, False],
+                    ]
+                ],
+                dtype=bool,
+            ),
+            np.array([-3, -3]),
+            (4, 4),
+            np.array(
+                [
+                    [
+                        [False, False, False, False],
+                        [False, False, False, False],
+                        [False, False, False, False],
+                        [False, False, False, False],
+                    ]
+                ],
+                dtype=bool,
+            ),
+            DoesNotRaise(),
+        ),
+        (
+            np.array(
+                [
+                    [
+                        [False, False, False, False],
+                        [False, True, True, False],
+                        [False, True, True, False],
+                        [False, False, False, False],
+                    ]
+                ],
+                dtype=bool,
+            ),
+            np.array([-2, -1]),
+            (4, 4),
+            np.array(
+                [
+                    [
+                        [True, False, False, False],
+                        [True, False, False, False],
+                        [False, False, False, False],
+                        [False, False, False, False],
+                    ]
+                ],
+                dtype=bool,
+            ),
+            DoesNotRaise(),
+        ),
+        (
+            np.array(
+                [
+                    [
+                        [False, False, False, False],
+                        [False, True, True, False],
+                        [False, True, True, False],
+                        [False, False, False, False],
+                    ]
+                ],
+                dtype=bool,
+            ),
+            np.array([-1, -2]),
+            (4, 4),
+            np.array(
+                [
+                    [
+                        [True, True, False, False],
+                        [False, False, False, False],
+                        [False, False, False, False],
+                        [False, False, False, False],
+                    ]
+                ],
+                dtype=bool,
+            ),
+            DoesNotRaise(),
+        ),
+        (
+            np.array(
+                [
+                    [
+                        [False, False, False, False],
+                        [False, True, True, False],
+                        [False, True, True, False],
+                        [False, False, False, False],
+                    ]
+                ],
+                dtype=bool,
+            ),
+            np.array([-2, 2]),
+            (4, 4),
+            np.array(
+                [
+                    [
+                        [False, False, False, False],
+                        [False, False, False, False],
+                        [False, False, False, False],
+                        [True, False, False, False],
+                    ]
+                ],
+                dtype=bool,
+            ),
+            DoesNotRaise(),
+        ),
+        (
+            np.array(
+                [
+                    [
+                        [False, False, False, False],
+                        [False, True, True, False],
+                        [False, True, True, False],
+                        [False, False, False, False],
+                    ]
+                ],
+                dtype=bool,
+            ),
+            np.array([3, 3]),
+            (4, 4),
+            np.array(
+                [
+                    [
+                        [False, False, False, False],
+                        [False, False, False, False],
+                        [False, False, False, False],
+                        [False, False, False, False],
+                    ]
+                ],
+                dtype=bool,
+            ),
+            DoesNotRaise(),
+        ),
+        (
+            np.array(
+                [
+                    [
+                        [False, False, False, False],
+                        [False, True, True, False],
+                        [False, True, True, False],
+                        [False, False, False, False],
+                    ]
+                ],
+                dtype=bool,
+            ),
+            np.array([3, 3]),
+            (6, 6),
+            np.array(
+                [
+                    [
+                        [False, False, False, False, False, False],
+                        [False, False, False, False, False, False],
+                        [False, False, False, False, False, False],
+                        [False, False, False, False, False, False],
+                        [False, False, False, False, True, True],
+                        [False, False, False, False, True, True],
+                    ]
+                ],
+                dtype=bool,
+            ),
+            DoesNotRaise(),
+        ),
+    ],
+)
+def test_move_masks(
+    masks: np.ndarray,
+    offset: np.ndarray,
+    resolution_wh: Tuple[int, int],
+    expected_result: np.ndarray,
+    exception: Exception,
+) -> None:
+    with exception:
+        result = move_masks(masks=masks, offset=offset, resolution_wh=resolution_wh)
+        np.testing.assert_array_equal(result, expected_result)
 
 
 @pytest.mark.parametrize(
@@ -975,7 +1239,7 @@ def test_get_data_item(
             ),
             False,
             DoesNotRaise(),
-        ),  # foreground object in 2 seperate elements
+        ),  # foreground object in 2 separate elements
         (
             np.array([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]).astype(
                 bool
@@ -1032,7 +1296,7 @@ def test_contains_holes(
             4,
             True,
             DoesNotRaise(),
-        ),  # foreground object in 2 seperate elements
+        ),  # foreground object in 2 separate elements
         (
             np.array([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]).astype(
                 bool
@@ -1138,3 +1402,163 @@ def test_xywh_to_xyxy(xywh: np.ndarray, expected_result: np.ndarray) -> None:
 def test_xcycwh_to_xyxy(xcycwh: np.ndarray, expected_result: np.ndarray) -> None:
     result = xcycwh_to_xyxy(xcycwh)
     np.testing.assert_array_equal(result, expected_result)
+
+
+@pytest.mark.parametrize(
+    "metadata_list, expected_result, exception",
+    [
+        # Identical metadata with a single key
+        ([{"key1": "value1"}, {"key1": "value1"}], {"key1": "value1"}, DoesNotRaise()),
+        # Identical metadata with multiple keys
+        (
+            [
+                {"key1": "value1", "key2": "value2"},
+                {"key1": "value1", "key2": "value2"},
+            ],
+            {"key1": "value1", "key2": "value2"},
+            DoesNotRaise(),
+        ),
+        # Conflicting values for the same key
+        ([{"key1": "value1"}, {"key1": "value2"}], None, pytest.raises(ValueError)),
+        # Different sets of keys across dictionaries
+        ([{"key1": "value1"}, {"key2": "value2"}], None, pytest.raises(ValueError)),
+        # Empty metadata list
+        ([], {}, DoesNotRaise()),
+        # Empty metadata dictionaries
+        ([{}, {}], {}, DoesNotRaise()),
+        # Different declaration order for keys
+        (
+            [
+                {"key1": "value1", "key2": "value2"},
+                {"key2": "value2", "key1": "value1"},
+            ],
+            {"key1": "value1", "key2": "value2"},
+            DoesNotRaise(),
+        ),
+        # Nested metadata dictionaries
+        (
+            [{"key1": {"sub_key": "sub_value"}}, {"key1": {"sub_key": "sub_value"}}],
+            {"key1": {"sub_key": "sub_value"}},
+            DoesNotRaise(),
+        ),
+        # Large metadata dictionaries with many keys
+        (
+            [
+                {f"key{i}": f"value{i}" for i in range(100)},
+                {f"key{i}": f"value{i}" for i in range(100)},
+            ],
+            {f"key{i}": f"value{i}" for i in range(100)},
+            DoesNotRaise(),
+        ),
+        # Mixed types in list metadata values
+        (
+            [{"key1": ["value1", 2, True]}, {"key1": ["value1", 2, True]}],
+            {"key1": ["value1", 2, True]},
+            DoesNotRaise(),
+        ),
+        # Identical lists across metadata dictionaries
+        (
+            [{"key1": [1, 2, 3]}, {"key1": [1, 2, 3]}],
+            {"key1": [1, 2, 3]},
+            DoesNotRaise(),
+        ),
+        # Identical numpy arrays across metadata dictionaries
+        (
+            [{"key1": np.array([1, 2, 3])}, {"key1": np.array([1, 2, 3])}],
+            {"key1": np.array([1, 2, 3])},
+            DoesNotRaise(),
+        ),
+        # Identical numpy arrays across metadata dictionaries, different datatype
+        (
+            [
+                {"key1": np.array([1, 2, 3], dtype=np.int32)},
+                {"key1": np.array([1, 2, 3], dtype=np.int64)},
+            ],
+            {"key1": np.array([1, 2, 3])},
+            DoesNotRaise(),
+        ),
+        # Conflicting lists for the same key
+        ([{"key1": [1, 2, 3]}, {"key1": [4, 5, 6]}], None, pytest.raises(ValueError)),
+        # Conflicting numpy arrays for the same key
+        (
+            [{"key1": np.array([1, 2, 3])}, {"key1": np.array([4, 5, 6])}],
+            None,
+            pytest.raises(ValueError),
+        ),
+        # Mixed data types: list and numpy array for the same key
+        (
+            [{"key1": [1, 2, 3]}, {"key1": np.array([1, 2, 3])}],
+            None,
+            pytest.raises(ValueError),
+        ),
+        # Empty lists and numpy arrays for the same key
+        ([{"key1": []}, {"key1": np.array([])}], None, pytest.raises(ValueError)),
+        # Identical multi-dimensional lists across metadata dictionaries
+        (
+            [{"key1": [[1, 2], [3, 4]]}, {"key1": [[1, 2], [3, 4]]}],
+            {"key1": [[1, 2], [3, 4]]},
+            DoesNotRaise(),
+        ),
+        # Identical multi-dimensional numpy arrays across metadata dictionaries
+        (
+            [
+                {"key1": np.arange(4).reshape(2, 2)},
+                {"key1": np.arange(4).reshape(2, 2)},
+            ],
+            {"key1": np.arange(4).reshape(2, 2)},
+            DoesNotRaise(),
+        ),
+        # Conflicting multi-dimensional lists for the same key
+        (
+            [{"key1": [[1, 2], [3, 4]]}, {"key1": [[5, 6], [7, 8]]}],
+            None,
+            pytest.raises(ValueError),
+        ),
+        # Conflicting multi-dimensional numpy arrays for the same key
+        (
+            [
+                {"key1": np.arange(4).reshape(2, 2)},
+                {"key1": np.arange(4, 8).reshape(2, 2)},
+            ],
+            None,
+            pytest.raises(ValueError),
+        ),
+        # Mixed types with multi-dimensional list and array for the same key
+        (
+            [{"key1": [[1, 2], [3, 4]]}, {"key1": np.arange(4).reshape(2, 2)}],
+            None,
+            pytest.raises(ValueError),
+        ),
+        # Identical higher-dimensional (3D) numpy arrays across
+        # metadata dictionaries
+        (
+            [
+                {"key1": np.arange(8).reshape(2, 2, 2)},
+                {"key1": np.arange(8).reshape(2, 2, 2)},
+            ],
+            {"key1": np.arange(8).reshape(2, 2, 2)},
+            DoesNotRaise(),
+        ),
+        # Differently-shaped higher-dimensional (3D) numpy arrays
+        # across metadata dictionaries
+        (
+            [
+                {"key1": np.arange(8).reshape(2, 2, 2)},
+                {"key1": np.arange(8).reshape(4, 1, 2)},
+            ],
+            None,
+            pytest.raises(ValueError),
+        ),
+    ],
+)
+def test_merge_metadata(metadata_list, expected_result, exception):
+    with exception:
+        result = merge_metadata(metadata_list)
+        if expected_result is None:
+            assert result is None, f"Expected an error, but got a result {result}"
+        for key, value in result.items():
+            assert key in expected_result
+            if isinstance(value, np.ndarray):
+                np.testing.assert_array_equal(value, expected_result[key])
+            else:
+                assert value == expected_result[key]
